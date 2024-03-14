@@ -1,0 +1,71 @@
+select *
+from fifa_21
+
+--Duplicates check
+SELECT long_Name, Age, club_name, Nationality, COUNT (*) AS Count
+FROM fifa_21
+GROUP BY long_Name, Age, club_name, Nationality
+HAVING COUNT (*) > 1;
+
+
+--Null values
+SELECT COUNT (*) AS Count
+FROM fifa_21
+WHERE long_Name IS NULL
+OR Age IS NULL
+OR Nationality IS NULL
+OR club_name IS NULL
+
+-- remove Null
+DELETE FROM fifa_21
+WHERE long_Name IS NULL
+   OR Age IS NULL
+   OR Nationality IS NULL
+   OR club_name IS NULL
+
+--rename column club_name into club
+EXEC sp_rename 'fifa_21.club_name', 'club', 'COLUMN';
+
+--remove a player
+DELETE FROM fifa_21
+WHERE long_Name = 'Jan Oblak';
+
+
+--Check if the height and weight columns has the correct data type
+SELECT 
+    COLUMN_NAME,
+    DATA_TYPE
+FROM 
+    INFORMATION_SCHEMA.COLUMNS
+WHERE 
+    TABLE_NAME = 'fifa_21'
+    AND COLUMN_NAME IN ('height_cm', 'weight_kg');
+
+-- separe the joined column into year month and day columns
+ALTER TABLE fifa_21
+ADD year INT,
+    month INT,
+    day INT;
+UPDATE fifa_21
+SET 
+    year = YEAR(joined),
+    month = MONTH(joined),
+    day = DAY(joined);
+
+--transform the value, wage and release clause columns of integers
+	UPDATE fifa_21
+	SET 
+		value_eur = TRY_CAST(value_eur AS INT),
+		wage_eur = TRY_CAST(wage_eur AS INT),
+		release_clause_eur = TRY_CAST(release_clause_eur AS INT);
+
+--Adding the age group: Those who are 19 years old or younger are classified as Young people between 20 adults 30 and above is Old
+ALTER TABLE fifa_21
+ADD age_group VARCHAR(20)
+UPDATE fifa_21
+SET age_group = 
+    CASE 
+        WHEN age <= 19 THEN 'Young'
+        WHEN age BETWEEN 20 AND 29 THEN 'adult'
+        ELSE 'Old'
+    END;
